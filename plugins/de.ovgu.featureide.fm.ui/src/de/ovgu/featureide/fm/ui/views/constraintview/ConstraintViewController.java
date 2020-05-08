@@ -86,7 +86,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 
 	private static final Integer FEATURE_EDIT_PART_OFFSET = 17;
 
-	private ConstraintView viewer;
+	private ConstraintView view;
 	private FeatureModelManager fmManager;
 	private ConstraintViewPartListener partListener;
 	private ConstraintViewSettingsMenu settingsMenu;
@@ -130,7 +130,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 			if (event.getSelectedPage() instanceof FeatureDiagramEditor) {
 				refreshView(featureModelEditor.getFeatureModelManager());
 			} else {
-				viewer.addNoFeatureModelItem();
+				view.addNoFeatureModelItem();
 			}
 		}
 	};
@@ -141,14 +141,14 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	@Override
 	public void createPartControl(Composite parent) {
 		parent.setLayout(new FillLayout(SWT.HORIZONTAL));
-		viewer = new ConstraintView(parent, this);
-		viewer.getSearchBox().addModifyListener(searchListener);
+		view = new ConstraintView(parent, this);
+		view.getSearchBox().addModifyListener(searchListener);
 		addListener();
 		if (featureModelEditor != null) {
 			addPageChangeListener(featureModelEditor);
 			refreshView(featureModelEditor.getFeatureModelManager());
 		} else {
-			viewer.addNoFeatureModelItem();
+			view.addNoFeatureModelItem();
 		}
 		settingsMenu = new ConstraintViewSettingsMenu(this);
 		new ConstraintViewContextMenu(this);
@@ -161,9 +161,9 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 
 		@Override
 		public void modifyText(ModifyEvent e) {
-			searchText = viewer.getSearchBox().getText();
+			searchText = view.getSearchBox().getText();
 			if (searchText.isEmpty()) {
-				viewer.removeAll();
+				view.removeAll();
 				addVisibleConstraints();
 			} else {
 				checkForRefresh();
@@ -202,7 +202,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	private void refreshConstraints(FeatureModelManager currentModel) {
 		// Refresh entire List
 		if (refreshWithDelete) {
-			viewer.removeAll();
+			view.removeAll();
 			// no search text is entered:
 			if (searchText.isEmpty()) {
 				final List<ConstraintColorPair> explanationList = getExplanationConstraints();
@@ -228,8 +228,8 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 			// Only update explanations
 		} else {
 
-			for (final TreeItem constraint : viewer.getViewer().getTree().getItems()) {
-				viewer.undecorateItem((IConstraint) constraint.getData());
+			for (final TreeItem constraint : view.getViewer().getTree().getItems()) {
+				view.undecorateItem((IConstraint) constraint.getData());
 			}
 			if (searchText.isEmpty()) {
 				changeIntoDecoratedConstraints();
@@ -241,7 +241,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	 * Add decoration to explanation Constraints without hiding the others (called when the subject is a constraint from the view)
 	 */
 	private void changeIntoDecoratedConstraints() {
-		final TreeItem constraints[] = viewer.getViewer().getTree().getItems();
+		final TreeItem constraints[] = view.getViewer().getTree().getItems();
 		final List<ConstraintColorPair> explanationList = getExplanationConstraints();
 		if (explanationList != null) {
 			// Iterate reasons
@@ -250,7 +250,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 				for (final TreeItem constraint : constraints) {
 					// If a match was found: Decorate that item
 					if (pair.getConstraint().equals(constraint.getData())) {
-						viewer.changeToDecoratedItem(pair.getConstraint(), pair.getColor());
+						view.changeToDecoratedItem(pair.getConstraint(), pair.getColor());
 						continue m;
 					}
 				}
@@ -264,7 +264,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	public void addVisibleConstraints() {
 		final List<IGraphicalConstraint> constraints = featureModelEditor.diagramEditor.getGraphicalFeatureModel().getNonCollapsedConstraints();
 		for (final IGraphicalConstraint constraint : constraints) {
-			viewer.addItem(constraint.getObject());
+			view.addItem(constraint.getObject());
 		}
 	}
 
@@ -281,7 +281,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 				for (final Object part : diagramEditor.getViewer().getSelectedEditParts()) {
 					if (part instanceof FeatureEditPart) {
 						if (matchesConstraint(part, constraint)) {
-							viewer.addItem(constraint.getObject());
+							view.addItem(constraint.getObject());
 							break;
 						}
 					}
@@ -312,7 +312,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 						for (final IGraphicalConstraint constraint : constraints) {
 							if (constraint.getObject().equals(c)) {
 								boolean additem = true;
-								final TreeItem[] treeitems = viewer.getViewer().getTree().getItems();
+								final TreeItem[] treeitems = view.getViewer().getTree().getItems();
 								for (int i = 0; i < treeitems.length; i++) {
 									// check for duplicate constraints before adding
 									if (treeitems[i].getData().equals(c)) {
@@ -321,7 +321,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 									}
 								}
 								if (additem) {
-									viewer.addItem(c);
+									view.addItem(c);
 								}
 								break;
 							}
@@ -380,7 +380,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 			searchText = searchText.toLowerCase();
 			// RegEx search with part string: .* at the start and at the end enables part search automatically
 			if (lazyConstraint.matches(".*" + searchText + ".*") || lazyDescription.matches(".*" + searchText + ".*")) {
-				viewer.addItem(constraint);
+				view.addItem(constraint);
 			}
 		}
 	}
@@ -396,7 +396,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 				addPageChangeListener(fme);
 				refreshView(fme.getFeatureModelManager());
 			} else {
-				viewer.addNoFeatureModelItem();
+				view.addNoFeatureModelItem();
 			}
 		}
 	}
@@ -456,9 +456,9 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	 * adding Listener to the tree viewer
 	 */
 	private void addListener() {
-		viewer.getViewer().addSelectionChangedListener(this);
-		viewer.getViewer().addDoubleClickListener(new ConstraintViewDoubleClickListener(this));
-		viewer.getViewer().getTree().addKeyListener(new ConstraintViewKeyListener(this));
+		view.getViewer().addSelectionChangedListener(this);
+		view.getViewer().addDoubleClickListener(new ConstraintViewDoubleClickListener(this));
+		view.getViewer().getTree().addKeyListener(new ConstraintViewKeyListener(this));
 		partListener = new ConstraintViewPartListener(this);
 		getSite().getPage().addPartListener(partListener);
 	}
@@ -483,7 +483,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 
 	@Override
 	public void setFocus() {
-		viewer.getViewer().getTree().setFocus();
+		view.getViewer().getTree().setFocus();
 	}
 
 	/**
@@ -506,11 +506,11 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	}
 
 	public TreeViewer getTreeViewer() {
-		return viewer.getViewer();
+		return view.getViewer();
 	}
 
 	public ConstraintView getView() {
-		return viewer;
+		return view;
 	}
 
 	public ConstraintViewSettingsMenu getSettingsMenu() {
