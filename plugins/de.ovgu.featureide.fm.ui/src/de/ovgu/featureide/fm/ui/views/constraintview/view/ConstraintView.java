@@ -176,7 +176,7 @@ public class ConstraintView implements GUIDefaults {
 					if (controller.getConstraintProperty(constraint).hasStatus(ConstraintStatus.REDUNDANT)) {
 						item.setImage(FM_INFO);
 					} else {
-						item.setImage(IMAGE_EMPTY);
+						item.setImage((Image) null);
 					}
 				}
 			}
@@ -187,6 +187,7 @@ public class ConstraintView implements GUIDefaults {
 	 * replaces logical connectives with unicode signs
 	 */
 	private String stringStyling(String string) {
+
 		string = string.replace("|", "\u2228");
 		string = string.replace("<=>", "\u21D4");
 		string = string.replace("=>", "\u21D2");
