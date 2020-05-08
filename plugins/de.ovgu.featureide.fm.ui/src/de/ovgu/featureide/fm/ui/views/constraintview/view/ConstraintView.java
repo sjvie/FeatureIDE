@@ -22,6 +22,8 @@ package de.ovgu.featureide.fm.ui.views.constraintview.view;
 
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -57,12 +59,14 @@ public class ConstraintView implements GUIDefaults {
 	private final Color ROW_ALTER_COLOR = new Color(Display.getDefault(), 240, 240, 240);
 
 	// Style parameters for the view
-	private final int CONSTRAINT_NAME_WIDTH = 500;
-	private final int CONSTRAINT_DESCRIPTION_WIDTH = 300;
 	private final int CIRCLE_DECORATION_SIZE = 16;
 	private final String CONSTRAINT_HEADER = "Constraint";
 	private final String DESCRIPTION_HEADER = "Description";
 	private final String DEFAULT_MESSAGE = StringTable.OPEN_A_FEATURE_DIAGRAM;
+
+	private static final float NAME_COLUMN_WIDTH_RATIO = 0.33f;
+	private static final float DESCRIPTION_COLUMN_WIDTH_RATIO = 0.67f;
+	private static final int COLUMN_DEFAULT_WIDTH = 400;
 
 	// UI elements
 	private TreeViewer treeViewer;
@@ -71,7 +75,7 @@ public class ConstraintView implements GUIDefaults {
 
 	private final ConstraintViewController controller;
 
-	private TreeColumn constraintColumn, descriptionColumn;
+	private TreeColumn nameColumn, descriptionColumn;
 
 	public void dispose() {
 		treeViewer.getTree().dispose();
@@ -89,7 +93,8 @@ public class ConstraintView implements GUIDefaults {
 		final TreeItem item = createTreeItem(element);
 		String displayName = ((IConstraint) element).getDisplayName();
 		displayName = stringStyling(displayName);
-		item.setText(new String[] { displayName, element.getDescription().replaceAll("\n", " ") }); // removes line break
+		item.setText(new String[] { displayName, element.getDescription().replaceAll("\n", " ") });
+		// removes line break
 		if (((tree.getItemCount() % 2) == 1)) {
 			item.setBackground(ROW_ALTER_COLOR);
 		}
@@ -176,7 +181,6 @@ public class ConstraintView implements GUIDefaults {
 				}
 			}
 		}
-
 	}
 
 	/**
@@ -250,6 +254,7 @@ public class ConstraintView implements GUIDefaults {
 //		tree.setHeaderForeground(HEADER_FORGROUND_COLOR);
 		tree.setHeaderVisible(true);
 		tree.setLinesVisible(true);
+
 		addColumns(treeViewer);
 	}
 
@@ -257,17 +262,38 @@ public class ConstraintView implements GUIDefaults {
 	 * Adds the columns with topics to the tree viewer
 	 */
 	private void addColumns(TreeViewer viewer) {
-		constraintColumn = new TreeColumn(viewer.getTree(), SWT.LEFT);
-		constraintColumn.setResizable(true);
-		constraintColumn.setMoveable(true);
-		constraintColumn.setWidth(CONSTRAINT_NAME_WIDTH);
-		constraintColumn.setText(CONSTRAINT_HEADER);
+		nameColumn = new TreeColumn(viewer.getTree(), SWT.LEFT);
+		nameColumn.setResizable(true);
+		nameColumn.setMoveable(true);
+		nameColumn.setWidth(COLUMN_DEFAULT_WIDTH);
+		nameColumn.setText(CONSTRAINT_HEADER);
 
 		descriptionColumn = new TreeColumn(viewer.getTree(), SWT.LEFT);
 		descriptionColumn.setResizable(true);
 		descriptionColumn.setMoveable(true);
-		descriptionColumn.setWidth(CONSTRAINT_DESCRIPTION_WIDTH);
+		descriptionColumn.setWidth(COLUMN_DEFAULT_WIDTH);
 		descriptionColumn.setText(DESCRIPTION_HEADER);
+
+		// resize the columns once relative to the view size
+		final ControlListener viewResizeListener = new ControlListener() {
+
+			@Override
+			public void controlMoved(ControlEvent e) {}
+
+			@Override
+			public void controlResized(ControlEvent e) {
+				final int viewerWidth = viewer.getTree().getParent().getClientArea().width;
+				nameColumn.setWidth((int) (viewerWidth * NAME_COLUMN_WIDTH_RATIO));
+				descriptionColumn.setWidth((int) (viewerWidth * DESCRIPTION_COLUMN_WIDTH_RATIO));
+
+				// Eclipse resizes views on startup twice. The final view size is only reached, when the view is visible.
+				if (viewer.getControl().isVisible()) {
+					// Remove the listener, because we only want the resizing to happen once
+					viewer.getControl().getParent().removeControlListener(this);
+				}
+			}
+		};
+		viewer.getControl().getParent().addControlListener(viewResizeListener);
 	}
 
 	/**
