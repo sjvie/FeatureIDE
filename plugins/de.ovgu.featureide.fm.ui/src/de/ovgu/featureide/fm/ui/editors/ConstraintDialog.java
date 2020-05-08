@@ -548,9 +548,6 @@ public class ConstraintDialog implements GUIDefaults {
 
 	/**
 	 * closes the shell and adds new constraint to the feature model if possible
-	 *
-	 * @param featureModelManager
-	 * @param constraint
 	 */
 	private void closeShell() {
 		final String input = constraintText.getText().trim();
