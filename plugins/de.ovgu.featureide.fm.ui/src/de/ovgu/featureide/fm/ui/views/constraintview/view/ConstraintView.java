@@ -20,6 +20,9 @@
  */
 package de.ovgu.featureide.fm.ui.views.constraintview.view;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
@@ -41,6 +44,7 @@ import de.ovgu.featureide.fm.core.base.IConstraint;
 import de.ovgu.featureide.fm.core.localization.StringTable;
 import de.ovgu.featureide.fm.ui.editors.featuremodel.GUIDefaults;
 import de.ovgu.featureide.fm.ui.views.constraintview.ConstraintViewController;
+import de.ovgu.featureide.fm.ui.views.constraintview.listener.ConstraintViewColumnSelectionListener;
 
 /**
  * This class represents the view (MVC) of the constraint view. It creates all UI elements and provides methods to get the conten of the view.
@@ -87,30 +91,26 @@ public class ConstraintView implements GUIDefaults {
 	}
 
 	/**
-	 * This method adds a constraint to the view
+	 * This method creates a TreeItem from a constraint and adds it to the view
 	 */
-	public TreeItem addItem(IConstraint element) {
-		final TreeItem item = createTreeItem(element);
-		String displayName = ((IConstraint) element).getDisplayName();
-		displayName = stringStyling(displayName);
-		item.setText(new String[] { displayName, element.getDescription().replaceAll("\n", " ") });
-		// removes line break
+	public TreeItem addItem(IConstraint constraint) {
+		final TreeItem item = new TreeItem(tree, SWT.None);
+		item.setData(constraint);
+
+		String displayName = constraint.getDisplayName();
+		displayName = replaceSpecialChars(displayName);
+
+		final String description = constraint.getDescription().replaceAll("\n", " ");
+
+		item.setText(new String[] { displayName, description });
+
 		if (((tree.getItemCount() % 2) == 1)) {
 			item.setBackground(ROW_ALTER_COLOR);
 		}
-		if (controller.getConstraintProperty(element).hasStatus(ConstraintStatus.REDUNDANT)) {
+		if (controller.getConstraintProperty(constraint).hasStatus(ConstraintStatus.REDUNDANT)) {
 			item.setImage(FM_INFO);
 		}
 		tree.setHeaderVisible(true);
-		return item;
-	}
-
-	/**
-	 * This method creates a TreeItem and adds the constraint as data to it.
-	 */
-	public TreeItem createTreeItem(IConstraint constraint) {
-		final TreeItem item = new TreeItem(tree, SWT.None);
-		item.setData(constraint);
 		return item;
 	}
 
@@ -186,7 +186,7 @@ public class ConstraintView implements GUIDefaults {
 	/**
 	 * replaces logical connectives with unicode signs
 	 */
-	private String stringStyling(String string) {
+	private String replaceSpecialChars(String string) {
 
 		string = string.replace("|", "\u2228");
 		string = string.replace("<=>", "\u21D4");
@@ -269,11 +269,15 @@ public class ConstraintView implements GUIDefaults {
 		nameColumn.setWidth(COLUMN_DEFAULT_WIDTH);
 		nameColumn.setText(CONSTRAINT_HEADER);
 
+		nameColumn.addSelectionListener(new ConstraintViewColumnSelectionListener(this, nameColumn));
+
 		descriptionColumn = new TreeColumn(viewer.getTree(), SWT.LEFT);
 		descriptionColumn.setResizable(true);
 		descriptionColumn.setMoveable(true);
 		descriptionColumn.setWidth(COLUMN_DEFAULT_WIDTH);
 		descriptionColumn.setText(DESCRIPTION_HEADER);
+
+		descriptionColumn.addSelectionListener(new ConstraintViewColumnSelectionListener(this, descriptionColumn));
 
 		// resize the columns once relative to the view size
 		final ControlListener viewResizeListener = new ControlListener() {
@@ -287,7 +291,8 @@ public class ConstraintView implements GUIDefaults {
 				nameColumn.setWidth((int) (viewerWidth * NAME_COLUMN_WIDTH_RATIO));
 				descriptionColumn.setWidth((int) (viewerWidth * DESCRIPTION_COLUMN_WIDTH_RATIO));
 
-				// Eclipse resizes views on startup twice. The final view size is only reached, when the view is visible.
+				// Eclipse resizes views on startup twice. The final view size is only reached,
+				// when the view is visible.
 				if (viewer.getControl().isVisible()) {
 					// Remove the listener, because we only want the resizing to happen once
 					viewer.getControl().getParent().removeControlListener(this);
@@ -298,11 +303,62 @@ public class ConstraintView implements GUIDefaults {
 	}
 
 	/**
+	 * Sorts the TreeItems of the given Tree
+	 *
+	 * @param tree Tree to be sorted
+	 * @param treeColumn Column to sort by
+	 * @param direction Direction to sort by. SWT.UP to sort in ascending order, SWT.DOWN to sort in descending order
+	 */
+	public void sortTree(Tree tree, TreeColumn treeColumn, int direction) {
+		tree.setSortColumn(treeColumn);
+		tree.setSortDirection(direction);
+
+		final TreeItem[] items = tree.getItems();
+
+		final IConstraint[] constraints = new IConstraint[items.length];
+		for (int i = 0; i < items.length; i++) {
+			constraints[i] = (IConstraint) items[i].getData();
+		}
+		tree.removeAll();
+
+		if (treeColumn.equals(descriptionColumn)) {
+			Arrays.sort(constraints, (o1, o2) -> {
+				final int compare = o1.getDescription().compareTo(o2.getDescription());
+				if (compare == 0) {
+					return o1.getDisplayName().compareTo(o2.getDisplayName());
+				}
+
+				if (o1.getDescription().equals("")) {
+					return 1;
+				}
+
+				if (o2.getDescription().equals("")) {
+					return -1;
+				}
+				return compare;
+			});
+		} else if (treeColumn.equals(nameColumn)) {
+			Arrays.sort(constraints, Comparator.comparing(o -> o.getDisplayName()));
+		}
+
+		// reverse direction when sorting down
+		if (direction == SWT.DOWN) {
+			for (int i = 0; i < (constraints.length / 2); i++) {
+				final IConstraint tmp = constraints[i];
+				constraints[i] = constraints[constraints.length - i - 1];
+				constraints[constraints.length - i - 1] = tmp;
+			}
+		}
+		for (final IConstraint constraint : constraints) {
+			addItem(constraint);
+		}
+	}
+
+	/**
 	 * Text searchBox
 	 */
 	public Text getSearchBox() {
 		return searchBox;
-
 	}
 
 }
