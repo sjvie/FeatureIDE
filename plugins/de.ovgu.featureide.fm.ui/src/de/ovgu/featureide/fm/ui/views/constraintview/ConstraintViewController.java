@@ -80,6 +80,7 @@ import de.ovgu.featureide.fm.ui.views.constraintview.view.ConstraintViewSettings
  * @author Rahel Arens
  * @author Thomas Graave
  */
+
 public class ConstraintViewController extends ViewPart implements GUIDefaults, ISelectionChangedListener {
 
 	public static final String ID = FMUIPlugin.PLUGIN_ID + ".views.ConstraintView";
@@ -130,6 +131,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 				refreshView(featureModelEditor.getFeatureModelManager());
 			} else {
 				view.addNoFeatureModelItem();
+				settingsMenu.setStateOfActions(false);
 			}
 		}
 	};
@@ -188,7 +190,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 			}
 		}
 		if (settingsMenu != null) {
-			settingsMenu.update(this);
+			settingsMenu.update();
 		}
 
 		refreshConstraints(fmManager);
@@ -398,6 +400,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 				refreshView(fme.getFeatureModelManager());
 			} else {
 				view.addNoFeatureModelItem();
+				settingsMenu.setStateOfActions(false);
 			}
 		}
 	}

@@ -20,6 +20,8 @@
  */
 package de.ovgu.featureide.fm.ui.views.constraintview.actions;
 
+import de.ovgu.featureide.fm.ui.views.constraintview.ConstraintViewController;
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.ISharedImages;
@@ -35,24 +37,20 @@ import de.ovgu.featureide.fm.ui.editors.featuremodel.actions.AbstractConstraintE
  *
  * @author Domenik Eichhorn
  */
-public class CreateConstraintInViewAction extends AbstractConstraintEditorAction {
+public class CreateConstraintInViewAction extends Action {
 
 	public static final String ID = "de.ovgu.featureide.createconstraintinview";
+	private ConstraintViewController controller;
 
 	private static ImageDescriptor createImage = PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJ_ADD);
 
-	public CreateConstraintInViewAction(Object viewer, IFeatureModelManager fmManager) {
-		super(viewer, fmManager, StringTable.CREATE_CONSTRAINT, ID);
-		setImageDescriptor(createImage);
+	public CreateConstraintInViewAction(ConstraintViewController controller) {
+		super(StringTable.CREATE_CONSTRAINT, createImage);
+		this.controller = controller;
 	}
 
 	@Override
 	public void run() {
-		new ConstraintDialog(featureModelManager, null);
-	}
-
-	@Override
-	protected boolean isValidSelection(IStructuredSelection selection) {
-		return true;
+		new ConstraintDialog(controller.getFeatureModelManager(), null);
 	}
 }
