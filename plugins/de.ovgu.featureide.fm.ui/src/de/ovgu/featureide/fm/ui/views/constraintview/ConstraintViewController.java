@@ -93,7 +93,6 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	private Explanation<?> explanation;
 
 	boolean refreshWithDelete = true;
-	boolean constraintsHidden = false;
 
 	private String searchText = "";
 
@@ -143,7 +142,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 		parent.setLayout(new FillLayout(SWT.HORIZONTAL));
 		view = new ConstraintView(parent, this);
 		view.getSearchBox().addModifyListener(searchListener);
-		addListener();
+		addListeners();
 		if (featureModelEditor != null) {
 			addPageChangeListener(featureModelEditor);
 			refreshView(featureModelEditor.getFeatureModelManager());
@@ -392,6 +391,8 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	public void checkForRefresh() {
 		if (featureModelEditor != null) {
 			final FeatureModelEditor fme = featureModelEditor;
+
+			// only refresh when the Feature Diagram page is active
 			if (fme.getActivePage() == 0) {
 				addPageChangeListener(fme);
 				refreshView(fme.getFeatureModelManager());
@@ -455,7 +456,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	/**
 	 * adding Listener to the tree viewer
 	 */
-	private void addListener() {
+	private void addListeners() {
 		view.getViewer().addSelectionChangedListener(this);
 		view.getViewer().addDoubleClickListener(new ConstraintViewDoubleClickListener(this));
 		view.getViewer().getTree().addKeyListener(new ConstraintViewKeyListener(this));
@@ -493,12 +494,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 		if ((featureModelEditor != null)) {
 			featureModelEditor.diagramEditor.getGraphicalFeatureModel().setConstraintsHidden(hideConstraints);
 			featureModelEditor.diagramEditor.getGraphicalFeatureModel().redrawDiagram();
-			constraintsHidden = hideConstraints;
 		}
-	}
-
-	public boolean isConstraintsHidden() {
-		return constraintsHidden;
 	}
 
 	public FeatureModelManager getFeatureModelManager() {
@@ -540,8 +536,8 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 					if (FeatureModelProperty.isRunCalculationAutomatically(fmManager.getVarObject())
 						&& FeatureModelProperty.isCalculateFeatures(fmManager.getVarObject())
 						&& FeatureModelProperty.isCalculateConstraints(fmManager.getVarObject())) {
-						final FeatureModelAnalyzer anlyzer = activeFMEditor.getFeatureModelManager().getVariableFormula().getAnalyzer();
-						diagramEditor.setActiveExplanation(anlyzer.getExplanation(constraint));
+						final FeatureModelAnalyzer analyzer = activeFMEditor.getFeatureModelManager().getVariableFormula().getAnalyzer();
+						diagramEditor.setActiveExplanation(analyzer.getExplanation(constraint));
 					}
 				}
 				for (final IGraphicalFeature graphFeature : graphicalFeatureModel.getAllFeatures()) {
@@ -562,6 +558,32 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 
 	public void setFeatureModelEditor(FeatureModelEditor featureModelEditor) {
 		this.featureModelEditor = featureModelEditor;
+	}
+
+	/**
+	 * Sets this Controller to track a FeatureModelEditor or to track none
+	 *
+	 * @param newFeatureModelEditor FeatureModelEditor to track or null if there is none
+	 */
+	public void switchToFeatureModelEditor(FeatureModelEditor newFeatureModelEditor) {
+		setConstraintsHidden(false);
+
+		if (newFeatureModelEditor == null) {
+			featureModelEditor = null;
+			getView().addNoFeatureModelItem();
+			getSettingsMenu().setStateOfActions(false);
+		} else {
+			if (!newFeatureModelEditor.equals(featureModelEditor)) {
+				featureModelEditor = newFeatureModelEditor;
+				checkForRefresh();
+				getSettingsMenu().setStateOfActions(true);
+			}
+
+			// Check if the constraints view is currently visible
+			if (PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().isPartVisible(this)) {
+				setConstraintsHidden(true);
+			}
+		}
 	}
 
 	public ConstraintProperties getConstraintProperty(IConstraint element) {

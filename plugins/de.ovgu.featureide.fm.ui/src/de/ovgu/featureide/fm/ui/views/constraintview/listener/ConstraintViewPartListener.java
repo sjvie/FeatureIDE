@@ -20,7 +20,7 @@
  */
 package de.ovgu.featureide.fm.ui.views.constraintview.listener;
 
-import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartReference;
@@ -43,60 +43,73 @@ public class ConstraintViewPartListener implements IPartListener2 {
 	}
 
 	@Override
-	public void partOpened(IWorkbenchPartReference part) {}
+	public void partOpened(IWorkbenchPartReference partRef) {}
 
 	@Override
-	public void partDeactivated(IWorkbenchPartReference part) {}
+	public void partDeactivated(IWorkbenchPartReference partRef) {}
 
 	@Override
-	public void partClosed(IWorkbenchPartReference part) {
-		if (part.getPart(false) instanceof FeatureModelEditor) {
-			controller.getView().removeAll();
-			controller.getView().addNoFeatureModelItem();
-			controller.getSettingsMenu().setStateOfActions(false);
-			controller.setFeatureModelEditor(null);
-		}
-	}
+	public void partClosed(IWorkbenchPartReference partRef) {}
 
 	@Override
-	public void partBroughtToTop(IWorkbenchPartReference part) {
-		final IWorkbenchPart activePart = part.getPart(false);
-		if (!(activePart instanceof FeatureModelEditor)) {
-			controller.getView().addNoFeatureModelItem();
-			controller.getSettingsMenu().setStateOfActions(false);
-		}
-	}
+	public void partBroughtToTop(IWorkbenchPartReference partRef) {}
 
 	@Override
-	public void partActivated(IWorkbenchPartReference part) {
-		final IWorkbenchPart activePart = part.getPart(false);
+	public void partActivated(IWorkbenchPartReference partRef) {
+		final IWorkbenchPart activePart = partRef.getPart(false);
 		if (activePart instanceof FeatureModelEditor) {
-			controller.setFeatureModelEditor((FeatureModelEditor) activePart);
-			controller.checkForRefresh();
-			// Check if the constraints view is currently visible
-			if (PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().isPartVisible(controller)) {
-				controller.setConstraintsHidden(true);
-			}
-		} else if (activePart instanceof IEditorPart) {
-			controller.setConstraintsHidden(controller.isConstraintsHidden());
+			controller.switchToFeatureModelEditor((FeatureModelEditor) activePart);
 		}
 	}
 
 	@Override
-	public void partHidden(IWorkbenchPartReference part) {
-		if (part.getId().equals(ConstraintViewController.ID)) {
+	public void partHidden(IWorkbenchPartReference partRef) {
+		final IWorkbenchPart hiddenPart = partRef.getPart(false);
+		if (hiddenPart instanceof FeatureModelEditor) {
+
+			// remove the editor from the constraints view only if the currently relevant editor is now hidden
+			if (hiddenPart.equals(controller.getFeatureModelEditor())) {
+				controller.switchToFeatureModelEditor(null);
+			}
+		}
+
+		if (partRef.getId().equals(ConstraintViewController.ID)) {
 			controller.setConstraintsHidden(false);
 		}
 	}
 
 	@Override
-	public void partVisible(IWorkbenchPartReference part) {
-		if (part.getId().equals(ConstraintViewController.ID)) {
-			controller.setConstraintsHidden(true);
+	public void partVisible(IWorkbenchPartReference partRef) {
+		final IWorkbenchPart visiblePart = partRef.getPart(false);
+
+		if (visiblePart instanceof FeatureModelEditor) {
+			controller.switchToFeatureModelEditor((FeatureModelEditor) visiblePart);
+		} else if (partRef.getId().equals(ConstraintViewController.ID)) {
+			final FeatureModelEditor visibleFeatureModelEditor = getVisibleFeatureModelEditor();
+			if (visibleFeatureModelEditor != null) {
+				controller.switchToFeatureModelEditor(visibleFeatureModelEditor);
+			}
 		}
 	}
 
 	@Override
 	public void partInputChanged(IWorkbenchPartReference partRef) {}
+
+	/**
+	 * Searches the Workbench for visible FeatureModelEditors and returns the first one found
+	 *
+	 * @return A visible FeatureModelEditor
+	 */
+	private FeatureModelEditor getVisibleFeatureModelEditor() {
+		final IEditorReference[] references = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getEditorReferences();
+		for (final IEditorReference reference : references) {
+			final IWorkbenchPart part = reference.getPart(false);
+			if ((part != null) && (part instanceof FeatureModelEditor)
+				&& PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().isPartVisible(part)) {
+				return (FeatureModelEditor) part;
+			}
+		}
+		return null;
+	}
 
 }
