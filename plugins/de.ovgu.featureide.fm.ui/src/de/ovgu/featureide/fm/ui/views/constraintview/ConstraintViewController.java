@@ -357,11 +357,13 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	 * Compares whether a FeatureEditPart occurs in a constraint and returns true if yes
 	 */
 	private boolean matchesConstraint(FeatureEditPart part, IGraphicalConstraint constraint) {
-		// Cutting the String because FeatureEditPart.toString == "FeatureEditPart( >Name< )";
-		final String partName = part.toString().substring(FEATURE_EDIT_PART_OFFSET, part.toString().length() - 2);
-		// Adding blanks to allow every case to be covered by just one RegEx
-		final String constraintName = " " + constraint.getObject().getDisplayName() + " ";
-		return constraintName.matches(".* -*" + partName + " .*");
+		final Object model = part.getModel();
+		if ( model == null ){
+			return false;
+		}
+		final String partName = model.toString();
+		final String constraintName = constraint.getObject().getDisplayName();
+		return constraintName.matches(".*( |^)-*" + partName + "( |$).*");
 	}
 
 	/**
