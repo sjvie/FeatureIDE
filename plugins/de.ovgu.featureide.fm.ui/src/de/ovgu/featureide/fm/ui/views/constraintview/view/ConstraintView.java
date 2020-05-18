@@ -328,17 +328,17 @@ public class ConstraintView implements GUIDefaults {
 					return o1.getDisplayName().compareTo(o2.getDisplayName());
 				}
 
-				if (o1.getDescription().equals("")) {
+				if ("".equals(o1.getDescription())) {
 					return 1;
 				}
 
-				if (o2.getDescription().equals("")) {
+				if ("".equals(o2.getDescription())) {
 					return -1;
 				}
 				return compare;
 			});
 		} else if (treeColumn.equals(nameColumn)) {
-			Arrays.sort(constraints, Comparator.comparing(o -> o.getDisplayName()));
+			Arrays.sort(constraints, Comparator.comparing(IConstraint::getDisplayName));
 		}
 
 		// reverse direction when sorting down
