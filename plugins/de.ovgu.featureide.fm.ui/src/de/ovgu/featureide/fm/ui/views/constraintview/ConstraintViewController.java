@@ -20,6 +20,8 @@
  */
 package de.ovgu.featureide.fm.ui.views.constraintview;
 
+import static de.ovgu.featureide.fm.core.base.event.FeatureIDEEvent.EventType.ACTIVE_EXPLANATION_CHANGED;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,8 +108,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 		 */
 		@Override
 		public void propertyChange(FeatureIDEEvent event) {
-			switch (event.getEventType()) {
-			case ACTIVE_EXPLANATION_CHANGED:
+			if (event.getEventType() == ACTIVE_EXPLANATION_CHANGED) {
 				if (FeatureModelUtil.getActiveFMEditor() != null) {
 					if (!isRefreshWithDelete()) {
 						checkForRefresh();
@@ -116,9 +117,6 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 						checkForRefresh();
 					}
 				}
-				break;
-			default:
-				break;
 			}
 		}
 	};
@@ -241,7 +239,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	 * Add decoration to explanation Constraints without hiding the others (called when the subject is a constraint from the view)
 	 */
 	private void changeIntoDecoratedConstraints() {
-		final TreeItem constraints[] = view.getViewer().getTree().getItems();
+		final TreeItem[] constraints = view.getViewer().getTree().getItems();
 		final List<ConstraintColorPair> explanationList = getExplanationConstraints();
 		if (explanationList != null) {
 			// Iterate reasons
@@ -313,9 +311,9 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 							if (constraint.getObject().equals(c)) {
 								boolean additem = true;
 								final TreeItem[] treeitems = view.getViewer().getTree().getItems();
-								for (int i = 0; i < treeitems.length; i++) {
+								for (final TreeItem treeitem : treeitems) {
 									// check for duplicate constraints before adding
-									if (treeitems[i].getData().equals(c)) {
+									if (treeitem.getData().equals(c)) {
 										additem = false;
 										break;
 									}
@@ -363,9 +361,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 			final String partName = part.toString().substring(FEATURE_EDIT_PART_OFFSET, part.toString().length() - 2);
 			// Adding blanks to allow every case to be covered by just one RegEx
 			final String constraintName = " " + constraint.getObject().getDisplayName() + " ";
-			if (constraintName.matches(".* -*" + partName + " .*")) {
-				return true;
-			}
+			return constraintName.matches(".* -*" + partName + " .*");
 		}
 		return false;
 	}
@@ -415,32 +411,30 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 				return null;
 			}
 
-			if (fmEditor != null) {
-				final FeatureModelAnalyzer analyser = fmEditor.getFeatureModelManager().getVariableFormula().getAnalyzer();
-				if (analyser.getAnalysesCollection().getFeatureModelProperties().hasStatus(FeatureModelStatus.VOID)) {
-					explanation = (Explanation<?>) analyser.getVoidFeatureModelExplanation();
-				} else if (fmEditor.diagramEditor.getActiveExplanation() != null) {
-					explanation = (Explanation<?>) fmEditor.diagramEditor.getActiveExplanation();
-				} else {
-					return null;
+			final FeatureModelAnalyzer analyser = fmEditor.getFeatureModelManager().getVariableFormula().getAnalyzer();
+			if (analyser.getAnalysesCollection().getFeatureModelProperties().hasStatus(FeatureModelStatus.VOID)) {
+				explanation = (Explanation<?>) analyser.getVoidFeatureModelExplanation();
+			} else if (fmEditor.diagramEditor.getActiveExplanation() != null) {
+				explanation = (Explanation<?>) fmEditor.diagramEditor.getActiveExplanation();
+			} else {
+				return null;
+			}
+			final List<ConstraintColorPair> constraintList = new ArrayList<>();
+			for (final Object reasonObj : explanation.getReasons()) {
+				if (reasonObj == null) {
+					continue;
 				}
-				final List<ConstraintColorPair> constraintList = new ArrayList<>();
-				for (final Object reasonObj : explanation.getReasons()) {
-					if (reasonObj == null) {
-						continue;
-					}
-					final FeatureModelReason fmReason = (FeatureModelReason) reasonObj;
-					if ((fmReason.getSubject() != null) && (fmReason.getSubject().getElement() != null)) {
-						for (final IGraphicalConstraint constraint : fmEditor.diagramEditor.getGraphicalFeatureModel().getConstraints()) {
-							if (constraint.getObject().equals(fmReason.getSubject().getElement())) {
-								constraintList.add(new ConstraintColorPair(constraint.getObject(), FMPropertyManager.getReasonColor(fmReason)));
-								continue;
-							}
+				final FeatureModelReason fmReason = (FeatureModelReason) reasonObj;
+				if ((fmReason.getSubject() != null) && (fmReason.getSubject().getElement() != null)) {
+					for (final IGraphicalConstraint constraint : fmEditor.diagramEditor.getGraphicalFeatureModel().getConstraints()) {
+						if (constraint.getObject().equals(fmReason.getSubject().getElement())) {
+							constraintList.add(new ConstraintColorPair(constraint.getObject(), FMPropertyManager.getReasonColor(fmReason)));
+							continue;
 						}
 					}
 				}
-				return constraintList;
 			}
+			return constraintList;
 		}
 		return null;
 	}
