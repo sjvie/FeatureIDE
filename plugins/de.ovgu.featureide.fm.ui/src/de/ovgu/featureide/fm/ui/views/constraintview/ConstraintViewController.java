@@ -279,7 +279,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 			for (final IGraphicalConstraint constraint : constraints) {
 				for (final Object part : diagramEditor.getViewer().getSelectedEditParts()) {
 					if (part instanceof FeatureEditPart) {
-						if (matchesConstraint(part, constraint)) {
+						if (matchesConstraint((FeatureEditPart) part, constraint)) {
 							view.addItem(constraint.getObject());
 							break;
 						}
@@ -356,15 +356,12 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults, I
 	/**
 	 * Compares whether a FeatureEditPart occurs in a constraint and returns true if yes
 	 */
-	private boolean matchesConstraint(Object part, IGraphicalConstraint constraint) {
-		if (part instanceof FeatureEditPart) {
-			// Cutting the String because FeatureEditPart.toString == "FeatureEditPart( >Name< )";
-			final String partName = part.toString().substring(FEATURE_EDIT_PART_OFFSET, part.toString().length() - 2);
-			// Adding blanks to allow every case to be covered by just one RegEx
-			final String constraintName = " " + constraint.getObject().getDisplayName() + " ";
-			return constraintName.matches(".* -*" + partName + " .*");
-		}
-		return false;
+	private boolean matchesConstraint(FeatureEditPart part, IGraphicalConstraint constraint) {
+		// Cutting the String because FeatureEditPart.toString == "FeatureEditPart( >Name< )";
+		final String partName = part.toString().substring(FEATURE_EDIT_PART_OFFSET, part.toString().length() - 2);
+		// Adding blanks to allow every case to be covered by just one RegEx
+		final String constraintName = " " + constraint.getObject().getDisplayName() + " ";
+		return constraintName.matches(".* -*" + partName + " .*");
 	}
 
 	/**
