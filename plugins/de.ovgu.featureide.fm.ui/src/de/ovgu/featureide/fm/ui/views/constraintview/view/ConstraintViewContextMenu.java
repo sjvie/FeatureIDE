@@ -40,6 +40,7 @@ import de.ovgu.featureide.fm.ui.views.constraintview.actions.FocusOnExplanationI
  * @author Rahel Arens
  */
 public class ConstraintViewContextMenu {
+
 	ConstraintViewController controller;
 
 	public ConstraintViewContextMenu(ConstraintViewController controller) {
@@ -54,9 +55,12 @@ public class ConstraintViewContextMenu {
 		final MenuManager contextMenu = new MenuManager("#ViewerMenu");
 		contextMenu.setRemoveAllWhenShown(true);
 		contextMenu.addMenuListener(new IMenuListener() {
+
 			@Override
 			public void menuAboutToShow(IMenuManager mgr) {
-				fillContextMenu(mgr, viewer);
+				if (controller.isConstraintsListVisible()) {
+					fillContextMenu(mgr, viewer);
+				}
 			}
 		});
 
@@ -70,7 +74,7 @@ public class ConstraintViewContextMenu {
 	protected void fillContextMenu(IMenuManager contextMenu, Viewer viewer) {
 		contextMenu.add(new CreateConstraintAction(viewer, controller.getFeatureModelManager()));
 		contextMenu.add(new FocusOnContainedFeaturesInViewAction(viewer, controller.getFeatureModelEditor().diagramEditor.getGraphicalFeatureModel()));
-		contextMenu.add(new FocusOnExplanationInViewAction(controller.getFeatureModelEditor().diagramEditor.getGraphicalFeatureModel(), viewer));
+		contextMenu.add(new FocusOnExplanationInViewAction(viewer, controller.getFeatureModelEditor().diagramEditor.getGraphicalFeatureModel()));
 		contextMenu.add(new EditConstraintInViewAction(viewer, controller.getFeatureModelManager()));
 		contextMenu.add(new DeleteConstraintInViewAction(viewer, controller.getFeatureModelManager()));
 	}

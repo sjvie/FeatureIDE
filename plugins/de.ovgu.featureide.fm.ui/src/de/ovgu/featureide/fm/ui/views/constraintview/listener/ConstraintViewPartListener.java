@@ -21,20 +21,20 @@
 package de.ovgu.featureide.fm.ui.views.constraintview.listener;
 
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IPartListener;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchPartReference;
-import org.eclipse.ui.PlatformUI;
 
 import de.ovgu.featureide.fm.ui.editors.FeatureModelEditor;
 import de.ovgu.featureide.fm.ui.views.constraintview.ConstraintViewController;
 
 /**
- * This class is the implementation of the IPartListener2 for the ConstraintView.
+ * This class is the implementation of the IPartListener for the ConstraintView.
  *
  * @author Rosiak Kamil
+ * @author Soeren Viegener
+ * @author Philipp Vulpius
  */
-public class ConstraintViewPartListener implements IPartListener2 {
+public class ConstraintViewPartListener implements IPartListener {
 
 	private final ConstraintViewController controller;
 
@@ -43,63 +43,43 @@ public class ConstraintViewPartListener implements IPartListener2 {
 	}
 
 	@Override
-	public void partOpened(IWorkbenchPartReference part) {}
+	public void partActivated(IWorkbenchPart part) {
+		updateActiveEditor(part);
+
+		if (!controller.isConstraintsViewVisible()) {
+			controller.setConstraintsHidden(controller.getFeatureModelEditor(), false);
+		} else if (part instanceof ConstraintViewController) {
+			controller.refresh();
+			controller.getView().refresh();
+		}
+	}
 
 	@Override
-	public void partDeactivated(IWorkbenchPartReference part) {}
+	public void partBroughtToTop(IWorkbenchPart part) {
+		updateActiveEditor(part);
+	}
 
 	@Override
-	public void partClosed(IWorkbenchPartReference part) {
-		if (part.getPart(false) instanceof FeatureModelEditor) {
-			controller.getView().removeAll();
-			controller.getView().addNoFeatureModelItem();
-			controller.removeSelectionListener();
-			controller.getSettingsMenu().setStateOfActions(false);
+	public void partClosed(IWorkbenchPart part) {
+		updateActiveEditor(part);
+	}
+
+	@Override
+	public void partDeactivated(IWorkbenchPart part) {
+		// this method is not needed. Every case is covered in the other events
+	}
+
+	@Override
+	public void partOpened(IWorkbenchPart part) {
+		updateActiveEditor(part);
+	}
+
+	private void updateActiveEditor(IWorkbenchPart part) {
+		final IEditorPart activeEditor = part.getSite().getPage().getActiveEditor();
+		if (activeEditor instanceof FeatureModelEditor) {
+			controller.setFeatureModelEditor((FeatureModelEditor) activeEditor);
+		} else {
 			controller.setFeatureModelEditor(null);
 		}
 	}
-
-	@Override
-	public void partBroughtToTop(IWorkbenchPartReference part) {
-		final IWorkbenchPart activePart = part.getPart(false);
-		if (!(activePart instanceof FeatureModelEditor)) {
-			controller.getView().addNoFeatureModelItem();
-			controller.getSettingsMenu().setStateOfActions(false);
-		}
-	}
-
-	@Override
-	public void partActivated(IWorkbenchPartReference part) {
-		final IWorkbenchPart activePart = part.getPart(false);
-		if (activePart instanceof FeatureModelEditor) {
-			controller.setFeatureModelEditor((FeatureModelEditor) activePart);
-			controller.removeSelectionListener();
-			controller.addSelectionListener();
-			controller.checkForRefresh();
-			// Check if the constraints view is currently visible
-			if (PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().isPartVisible(controller)) {
-				controller.setConstraintsHidden(true);
-			}
-		} else if (activePart instanceof IEditorPart) {
-			controller.setConstraintsHidden(controller.isConstraintsHidden());
-		}
-	}
-
-	@Override
-	public void partHidden(IWorkbenchPartReference part) {
-		if (part.getId().equals(ConstraintViewController.ID)) {
-			controller.setConstraintsHidden(false);
-		}
-	}
-
-	@Override
-	public void partVisible(IWorkbenchPartReference part) {
-		if (part.getId().equals(ConstraintViewController.ID)) {
-			controller.setConstraintsHidden(true);
-		}
-	}
-
-	@Override
-	public void partInputChanged(IWorkbenchPartReference partRef) {}
-
 }
