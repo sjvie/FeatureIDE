@@ -1118,10 +1118,15 @@ public class StringTable {
 	public static final String REMOVE_SELECTED_ATTRIBUTE = "Remove Selected Attribute";
 	public static final String CONSTRAINT_VIEW_REMEMBER_DECISION = "Remember my decision.";
 	public static final String CONSTRAINT_VIEW_NEVER_ASK = "Never ask again.";
-	public static final String CONSTRAINT_VIEW_QUESTION_TITLE = "Constraint View";
-	public static final String CONSTRAINT_VIEW_QUESTION_DIALOG = "Would you like to open the ConstraintView?";
+	public static final String CONSTRAINT_VIEW_QUESTION_TITLE = "Open the Constraint View?";
+	public static final String CONSTRAINT_VIEW_QUESTION_DIALOG = "Would you like to open the Constraint View?";
 	public static final String SELECT_SUBTREE = "Select Subtree (CTRL + T)";
 	public static final String SELECT_FEATURES_IN_FEATURE_DIAGRAM = "Select features in feature diagram to show their attributes";
 	public static final String NO_CONFIGURABLE_ATTRIBUTES = "The feature model does not contain configurable attributes.";
 
+	public static final String GTK_WORKAROUND_INFO_TITLE = "Workaround information";
+	public static final String GTK_WORKAROUND_INFO_MSG =
+		"Due to a feature breaking bug in the GTK framework, FeatureIDE has to employ a workaround to maintain functionality. See also bug #1003 in the FeatureIDE bug tracker.";
+	public static final String GTK_WORKAROUND_INFO_TOGGLE = "Do not show this message again.";
+	public static final String CONFIGURATION_DIALOGS_GTK_WORKAROUND = "Disable the workaround information for #1003";
 }
