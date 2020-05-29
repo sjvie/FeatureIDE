@@ -40,7 +40,6 @@ import de.ovgu.featureide.fm.ui.views.constraintview.actions.FocusOnExplanationI
  * @author Rahel Arens
  */
 public class ConstraintViewContextMenu {
-
 	ConstraintViewController controller;
 
 	public ConstraintViewContextMenu(ConstraintViewController controller) {
@@ -55,12 +54,9 @@ public class ConstraintViewContextMenu {
 		final MenuManager contextMenu = new MenuManager("#ViewerMenu");
 		contextMenu.setRemoveAllWhenShown(true);
 		contextMenu.addMenuListener(new IMenuListener() {
-
 			@Override
 			public void menuAboutToShow(IMenuManager mgr) {
-				if (controller.isConstraintsListVisible()) {
-					fillContextMenu(mgr, viewer);
-				}
+				fillContextMenu(mgr, viewer);
 			}
 		});
 
