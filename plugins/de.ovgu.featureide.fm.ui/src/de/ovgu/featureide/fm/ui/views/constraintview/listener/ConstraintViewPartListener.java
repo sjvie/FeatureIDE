@@ -46,17 +46,10 @@ public class ConstraintViewPartListener implements IPartListener {
 	public void partActivated(IWorkbenchPart part) {
 		if (part instanceof FeatureModelEditor) {
 			controller.setFeatureModelEditor((FeatureModelEditor) part);
-			controller.checkForRefresh();
 		} else if (part instanceof IEditorPart) {
 			controller.setFeatureModelEditor(null);
-			controller.checkForRefresh();
 		}
-
-		if(!controller.isConstraintsViewVisible()){
-			controller.setConstraintsHidden(controller.getFeatureModelEditor(), false);
-		}else if(part instanceof ConstraintViewController){
-			controller.setConstraintsHidden(controller.getFeatureModelEditor(), true);
-		}
+		controller.checkForRefresh();
 	}
 
 	@Override
