@@ -1009,10 +1009,6 @@ public class FeatureProject extends BuilderMarkerHandler implements IFeatureProj
 
 	@Override
 	public void resourceChanged(IResourceChangeEvent event) {
-		if ((event.findMarkerDeltas(DELETE_CONFIGURATION_MARKERS, false).length != 0)
-			|| (event.findMarkerDeltas(EclipseMarkerHandler.CONFIGURATION_MARKER, false).length != 0)) {
-			return;
-		}
 		// if something in source folder changed
 		if ((sourceFolder != null) && (event.getDelta().findMember(sourceFolder.getFullPath()) != null)) {
 			// set markers, only if event is not fired from changes to markers
@@ -1066,6 +1062,7 @@ public class FeatureProject extends BuilderMarkerHandler implements IFeatureProj
 					LOGGER.fireConfigurationChanged(this);
 					checkConfigurations(changedConfigs);
 				}
+
 				if (!buildRelevantChanges && (sourceFolder != null) && sourceFolder.isAccessible()) {
 					if ((currentConfig != null) && (composerExtension != null) && composerExtension.hasFeatureFolder()) {
 						// ignore changes in unselected feature folders
