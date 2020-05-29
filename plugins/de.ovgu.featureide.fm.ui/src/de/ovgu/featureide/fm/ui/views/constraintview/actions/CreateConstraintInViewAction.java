@@ -20,34 +20,39 @@
  */
 package de.ovgu.featureide.fm.ui.views.constraintview.actions;
 
-import org.eclipse.jface.action.Action;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
+import de.ovgu.featureide.fm.core.io.manager.IFeatureModelManager;
 import de.ovgu.featureide.fm.core.localization.StringTable;
 import de.ovgu.featureide.fm.ui.editors.ConstraintDialog;
-import de.ovgu.featureide.fm.ui.views.constraintview.ConstraintViewController;
+import de.ovgu.featureide.fm.ui.editors.featuremodel.actions.AbstractConstraintEditorAction;
 
 /**
  * A modified CreateConstraintAction for the ConstraintView
  *
  * @author Domenik Eichhorn
  */
-public class CreateConstraintInViewAction extends Action {
+public class CreateConstraintInViewAction extends AbstractConstraintEditorAction {
 
 	public static final String ID = "de.ovgu.featureide.createconstraintinview";
-	private final ConstraintViewController controller;
 
 	private static ImageDescriptor createImage = PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJ_ADD);
 
-	public CreateConstraintInViewAction(ConstraintViewController controller) {
-		super(StringTable.CREATE_CONSTRAINT, createImage);
-		this.controller = controller;
+	public CreateConstraintInViewAction(Object viewer, IFeatureModelManager fmManager) {
+		super(viewer, fmManager, StringTable.CREATE_CONSTRAINT, ID);
+		setImageDescriptor(createImage);
 	}
 
 	@Override
 	public void run() {
-		new ConstraintDialog(controller.getFeatureModelManager(), null);
+		new ConstraintDialog(featureModelManager, null);
+	}
+
+	@Override
+	protected boolean isValidSelection(IStructuredSelection selection) {
+		return true;
 	}
 }
