@@ -25,7 +25,9 @@ import java.util.List;
 
 import org.eclipse.jface.dialogs.IPageChangedListener;
 import org.eclipse.jface.dialogs.PageChangedEvent;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
@@ -105,14 +107,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults {
 
 		@Override
 		public void selectionChanged(SelectionChangedEvent event) {
-			final List<FeatureEditPart> selectionList = new ArrayList<>();
-
-			for (final Object o : event.getStructuredSelection().toList()) {
-				// only consider FeatureEditParts
-				if (o instanceof FeatureEditPart) {
-					selectionList.add((FeatureEditPart) o);
-				}
-			}
+			final List<FeatureEditPart> selectionList = getSelectionList(event.getStructuredSelection());
 
 			// only update and refresh when the selection changed
 			if (!selectionList.equals(constraintView.filter.getFeatureModelSelection())) {
@@ -131,7 +126,9 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults {
 		public void propertyChange(FeatureIDEEvent event) {
 			switch (event.getEventType()) {
 			case ACTIVE_EXPLANATION_CHANGED:
-				constraintView.filter.setActiveExplanation(featureModelEditor.diagramEditor.getActiveExplanation());
+				if (featureModelEditor != null) {
+					constraintView.filter.setActiveExplanation(featureModelEditor.diagramEditor.getActiveExplanation());
+				}
 				constraintView.refresh();
 				break;
 			case CONSTRAINT_DELETE:
@@ -146,8 +143,18 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults {
 				}
 				constraintView.refresh();
 				break;
-			case MODEL_DATA_OVERWRITTEN:
 			case MODEL_DATA_CHANGED:
+				if (updateConstraint != null) {
+					updateConstraint.removeListener(updateConstraintListener);
+				}
+				updateConstraint = getUpdateConstraint(featureModelEditor);
+				if (updateConstraint != null) {
+					// add a new updateConstraintListener to a new constraint
+					updateConstraint.addListener(updateConstraintListener);
+				}
+				constraintView.refresh();
+				break;
+			case MODEL_DATA_OVERWRITTEN:
 			case MODEL_DATA_SAVED:
 			case MANDATORY_CHANGED:
 			case GROUP_TYPE_CHANGED:
@@ -161,6 +168,7 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults {
 			case FEATURE_COLLAPSED_CHANGED:
 			case FEATURE_COLLAPSED_ALL_CHANGED:
 			case ATTRIBUTE_CHANGED:
+			case STRUCTURE_CHANGED:
 				constraintView.refresh();
 				break;
 			default:
@@ -249,7 +257,8 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults {
 		setConstraintsHidden(featureModelEditor, constraintsViewVisible);
 
 		if (constraintsViewVisible && constraintsListVisible) {
-			settingsMenu.setShowCollapsedConstraintsInViewActionImage(featureModelEditor.diagramEditor.getGraphicalFeatureModel().getLayout().showCollapsedConstraints());
+			settingsMenu.setShowCollapsedConstraintsInViewActionImage(
+					featureModelEditor.diagramEditor.getGraphicalFeatureModel().getLayout().showCollapsedConstraints());
 			// set the input (the current FeatureModel) for the content provider
 			final IFeatureModel featureModel = featureModelEditor.getFeatureModelManager().getVarObject();
 			if (constraintView.getViewer().getInput() != featureModel) {
@@ -309,8 +318,11 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults {
 				updateConstraint.addListener(updateConstraintListener);
 			}
 
+			constraintView.filter.setFeatureModelSelection(getSelectionList(newFeatureModelEditor.diagramEditor.getViewer().getSelection()));
+			constraintView.filter.setActiveExplanation(newFeatureModelEditor.diagramEditor.getActiveExplanation());
+
 			// update filter and settings menu to correctly handle "showCollapsedConstraints"
-			IGraphicalFeatureModel graphicalFeatureModel = newFeatureModelEditor.diagramEditor.getGraphicalFeatureModel();
+			final IGraphicalFeatureModel graphicalFeatureModel = newFeatureModelEditor.diagramEditor.getGraphicalFeatureModel();
 			constraintView.filter.setGraphicalFeatureModel(graphicalFeatureModel);
 		}
 
@@ -387,6 +399,24 @@ public class ConstraintViewController extends ViewPart implements GUIDefaults {
 				graphicalFeatureModel.redrawDiagram();
 			}
 		}
+	}
+
+	/**
+	 * Filters the selection by only returning the selected FeatureEditParts
+	 *
+	 * @param selection StructuredSelection to be filtered
+	 * @return List of FeatureEditParts that are contained in the selection
+	 */
+	public List<FeatureEditPart> getSelectionList(ISelection selection) {
+		final List<FeatureEditPart> selectionList = new ArrayList<>();
+
+		for (final Object o : ((IStructuredSelection) selection).toList()) {
+			// only consider FeatureEditParts
+			if (o instanceof FeatureEditPart) {
+				selectionList.add((FeatureEditPart) o);
+			}
+		}
+		return selectionList;
 	}
 
 	public FeatureModelManager getFeatureModelManager() {
